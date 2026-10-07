@@ -13,7 +13,10 @@ The normal movie workflow is:
     Radarr
       |
       v
-    Prowlarr
+    Prowlarr search results
+      |
+      v
+    Radarr submits download
       |
       v
     qBittorrent
@@ -40,7 +43,10 @@ The normal television workflow is:
     Sonarr
       |
       v
-    Prowlarr
+    Prowlarr search results
+      |
+      v
+    Sonarr submits download
       |
       v
     qBittorrent
@@ -56,7 +62,8 @@ The normal television workflow is:
 
 ## Quality Policy
 
-Recyclarr applies the defined Hestia quality and custom-format policy to
+Recyclarr synchronizes the tracked custom-format selections and scores into existing
+`Hestia 1080p` profiles in
 Radarr and Sonarr.
 
 This separates quality-policy management from individual application

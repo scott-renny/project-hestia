@@ -1,5 +1,8 @@
+# Portable service definition; application integrations live in runtime state.
+# Published ports retain the existing all-interface bindings.
 services:
 
+  # Playback; GPU group IDs must match the Linux host.
   jellyfin:
     image: jellyfin/jellyfin:latest
     container_name: hestia-jellyfin
@@ -19,6 +22,7 @@ services:
     environment:
       - TZ=${TZ}
 
+  # Acquisition; /data must match the library managers.
   qbittorrent:
     image: lscr.io/linuxserver/qbittorrent:latest
     container_name: hestia-qbittorrent
@@ -37,6 +41,7 @@ services:
       - "6881:6881"
       - "6881:6881/udp"
 
+  # Indexer integration and supporting solver.
   prowlarr:
     image: lscr.io/linuxserver/prowlarr:latest
     container_name: hestia-prowlarr
@@ -60,6 +65,7 @@ services:
       - CAPTCHA_SOLVER=none
       - TZ=${TZ}
 
+  # Library management; common mounts preserve import paths.
   radarr:
     image: lscr.io/linuxserver/radarr:latest
     container_name: hestia-radarr
@@ -88,6 +94,7 @@ services:
     ports:
       - "8989:8989"
 
+  # Requests; configure application API integrations after startup.
   seerr:
     image: ghcr.io/seerr-team/seerr:latest
     container_name: hestia-seerr
@@ -100,6 +107,7 @@ services:
     ports:
       - "5055:5055"
 
+  # Policy and enrichment; real Recyclarr secrets remain outside Git.
   recyclarr:
     image: ghcr.io/recyclarr/recyclarr:8
     container_name: hestia-recyclarr
@@ -124,7 +132,6 @@ services:
     ports:
       - "6767:6767"
 
-
   trailarr:
     image: nandyalu/trailarr:latest
     container_name: hestia-trailarr
@@ -141,7 +148,7 @@ services:
     ports:
       - "7889:7889"
 
-
+  # Recommendation infrastructure; quality requires real viewing history.
   vanguarr:
     image: ghcr.io/sparksbenjamin/vanguarr:latest
     container_name: hestia-vanguarr
@@ -153,6 +160,7 @@ services:
     ports:
       - "8000:8000"
 
+# Compose-managed bridge with Docker DNS; outbound access is retained.
 networks:
   default:
     name: hestia

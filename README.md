@@ -1,92 +1,113 @@
 <div align="center">
 
-# 🏠 Project Hestia
+# Project Hestia
+### Self-hosted media automation and delivery
 
-### Self-Hosted Media Automation & Delivery Platform
+Requests, library automation, quality policy, enrichment and playback in one Docker Compose platform.
 
-**A containerized media platform engineered for automated request handling,  
-library management, quality policy, enrichment, playback, and personalization.**
-
-![Linux](https://img.shields.io/badge/Linux-Ubuntu_24.04-E95420?logo=ubuntu&logoColor=white)
-![Docker](https://img.shields.io/badge/Docker-Compose-2496ED?logo=docker&logoColor=white)
-![Jellyfin](https://img.shields.io/badge/Jellyfin-Media_Platform-00A4DC?logo=jellyfin&logoColor=white)
-![GitHub](https://img.shields.io/badge/GitHub-Version_Control-181717?logo=github&logoColor=white)
-![Status](https://img.shields.io/badge/Status-Operational-success)
-![License](https://img.shields.io/badge/License-Not_Yet_Selected-lightgrey)
+[![Repository validation](https://github.com/scott-renny/project-hestia/actions/workflows/validate.yml/badge.svg)](https://github.com/scott-renny/project-hestia/actions/workflows/validate.yml)
+![Docker Compose](https://img.shields.io/badge/Docker-Compose-2496ED?logo=docker&logoColor=white)
+![Jellyfin](https://img.shields.io/badge/Jellyfin-Media-00A4DC?logo=jellyfin&logoColor=white)
 
 </div>
 
----
+Hestia is the media-services layer of the COC homelab, hosted on Atlas v1.
+This repository publishes its portable infrastructure definition and sanitized
+Recyclarr policy. Accounts, API integrations, databases and media remain in the
+deployment. Cloning the repository does not reproduce that application state.
 
-## Overview
+## Engineering highlights
 
-**Project Hestia** is the media-services platform within the COC homelab.
-
-Rather than operating as a collection of independent applications, Hestia
-integrates media serving, request management, library automation, quality
-policy, subtitle management, trailer automation, and personalized
-recommendations into a unified Docker Compose platform.
-
-The project is designed around reproducibility, service isolation,
-persistent storage, API-driven integration, configuration management, and
-safe migration between hosts.
-
-Hestia currently runs on **Project Atlas v1** and is designed to migrate to
-**Atlas v2** without changing its logical role or application architecture.
-
----
-
-## Engineering Highlights
-
-- **Containerized service architecture** using Docker Compose
-- **Internal service discovery** through Docker DNS
-- **Persistent configuration separated from bulk media storage**
-- **Shared filesystem architecture** for reliable cross-service imports
-- **API-driven integration** between media and automation services
-- **Quality policy as code** using Recyclarr
-- **Automated subtitle and trailer enrichment**
-- **Personalized recommendation infrastructure**
-- **Hardware-acceleration support** for Jellyfin
-- **Environment-based host path configuration**
-- **Secrets and runtime state excluded from version control**
-- **Repository validation tooling** for configuration and credential checks
-- **Migration-friendly design** for the future Atlas v2 platform
-
----
+- Docker DNS keeps integrations independent of the host address.
+- Configuration and bulk media use separate persistent host roots.
+- Download and import services share `/data`; Jellyfin sees `/media` and `/transcode`.
+- Recyclarr stores selected custom-format policy in Git and resolves API keys outside Git.
+- Host paths and numeric identities are configured through an environment file.
+- Validation checks repository hygiene, credentials, private addresses and Compose syntax.
 
 ## Architecture
 
 ```mermaid
-flowchart TD
-    U[Household User] --> S[Seerr<br/>Discovery & Requests]
+flowchart LR
+  U[Household] --> S[Seerr]
+  U --> J[Jellyfin]
+  subgraph H[Docker bridge: hestia]
+    S --> R[Radarr / Sonarr]
+    R -->|search| P[Prowlarr]
+    P --> F[FlareSolverr]
+    R -->|submit / monitor| Q[qBittorrent]
+    RC[Recyclarr] -->|policy| R
+    B[Bazarr] -->|API| R
+    T[Trailarr] -->|API| R
+    V[Vanguarr] -->|library / history| J
+    V -->|requests when configured| S
+  end
+  Q -->|download| D[(Shared data root)]
+  R -->|import| D
+  B -->|subtitles| D
+  T -->|trailers| D
+  D -->|media mount| J
+```
 
-    S --> R[Radarr<br/>Movies]
-    S --> SO[Sonarr<br/>TV & Series]
+The editable diagram source is [architecture.mmd](docs/assets/architecture.mmd).
+Arrows describe application integrations and data flow, not Compose startup dependencies.
+See [architecture](docs/ARCHITECTURE.md) for network and persistence boundaries.
 
-    R --> P[Prowlarr<br/>Search Integration]
-    SO --> P
+| Component | Role | Published host port |
+| --- | --- | --- |
+| Jellyfin | Playback, users and viewing state | 8096 |
+| Seerr | Discovery and requests | 5055 |
+| Radarr / Sonarr | Movie / television library management | 7878 / 8989 |
+| Prowlarr | Indexer integration | 9696 |
+| qBittorrent | Download client | 8080; 6881 TCP/UDP |
+| FlareSolverr | Supporting indexer integration | None |
+| Recyclarr | Custom-format policy synchronization | None |
+| Bazarr | Subtitles | 6767 |
+| Trailarr | Trailers | 7889 |
+| Vanguarr | Recommendation infrastructure | 8000 |
 
-    P --> Q[qBittorrent<br/>Acquisition]
+Radarr and Sonarr search through Prowlarr, submit downloads to qBittorrent,
+then import completed media. Jellyfin scans the imported library. Subtitle,
+trailer and recommendation services integrate through application configuration.
 
-    Q --> R
-    Q --> SO
+## Deploy and validate
 
-    R --> M[(Movie Library)]
-    SO --> T[(TV Library)]
+Target: Linux with Docker Engine and Compose v2. The supplied configuration
+requires `/dev/dri` for Jellyfin and Trailarr; hardware acceleration also needs
+application-side setup. Follow the [deployment guide](docs/DEPLOYMENT.md) before starting.
 
-    M --> J[Jellyfin<br/>Media Platform]
-    T --> J
+```bash
+git clone https://github.com/scott-renny/project-hestia.git
+cd project-hestia
+./scripts/validate-repo.sh
+```
 
-    B[Bazarr<br/>Subtitle Automation] --> R
-    B --> SO
+Validation does not launch containers or access production credentials.
+Published ports bind to all host interfaces by default. Restrict access using
+deployment-level controls described in [security](docs/SECURITY.md).
 
-    RC[Recyclarr<br/>Quality Policy as Code] --> R
-    RC --> SO
+## Documentation
 
-    TR[Trailarr<br/>Trailer Automation] --> R
-    TR --> SO
+| Guide | Contents |
+| --- | --- |
+| [Architecture](docs/ARCHITECTURE.md) | Service relationships, network and state boundaries |
+| [Deployment](docs/DEPLOYMENT.md) | Host preparation, identities, configuration and startup |
+| [Storage](docs/STORAGE.md) | Shared paths and migration constraints |
+| [Media flow](docs/MEDIA-FLOW.md) | Requests, acquisition, import and enrichment |
+| [Operations](docs/OPERATIONS.md) | Troubleshooting, controlled changes and host migration |
+| [Security](docs/SECURITY.md) | Exposure, credentials and repository safeguards |
+| [Recommendations](docs/RECOMMENDATIONS.md) | Current limitations and evaluation sequence |
+| [Roadmap](docs/ROADMAP.md) | Current scope and future work |
 
-    J --> V[Vanguarr<br/>Personalized Recommendations]
-    V --> J
+## Status and scope
 
-    J --> U
+The existing project documentation reports an operational Atlas v1 deployment.
+This v1.0 polish pass validates repository configuration, not live service health.
+Recommendation quality remains unevaluated pending sufficient genuine viewing history.
+Reverse proxy, TLS, remote access and monitoring are outside this Compose stack.
+Backup and restore are outside the current project scope.
+Most images use mutable `latest` tags; deployments are not fully version-reproducible.
+
+The project demonstrates container orchestration, filesystem and permission design,
+API integration, configuration management, operational documentation and CI guardrails.
+No benchmark or availability claims are made. No license has been selected.

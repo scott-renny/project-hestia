@@ -54,3 +54,12 @@ __pycache__/
 *.pyc
 .venv/
 venv/
+
+# Archives, runtime caches and local overrides
+*.zip
+*.tar
+*.tar.gz
+*.tgz
+cache/
+compose.override.yml
+compose.override.yaml

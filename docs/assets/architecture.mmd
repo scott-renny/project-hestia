@@ -1,0 +1,19 @@
+flowchart LR
+  U[Household] --> S[Seerr]
+  U --> J[Jellyfin]
+  subgraph H[Docker bridge: hestia]
+    S --> R[Radarr / Sonarr]
+    R -->|search| P[Prowlarr]
+    P --> F[FlareSolverr]
+    R -->|submit / monitor| Q[qBittorrent]
+    RC[Recyclarr] -->|policy| R
+    B[Bazarr] -->|API| R
+    T[Trailarr] -->|API| R
+    V[Vanguarr] -->|library / history| J
+    V -->|requests when configured| S
+  end
+  Q -->|download| D[(Shared data root)]
+  R -->|import| D
+  B -->|subtitles| D
+  T -->|trailers| D
+  D -->|media mount| J
