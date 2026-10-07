@@ -6,12 +6,16 @@ Hestia requires:
 
 - Linux
 - Docker Engine
-- Docker Compose
+- Docker Compose v2
+- Bash, Git and Python 3 for repository validation
 - persistent configuration storage
 - bulk media/data storage
 - appropriate filesystem permissions
 
-Jellyfin hardware acceleration is optional but recommended.
+The supplied Compose file maps `/dev/dri` into Jellyfin and Trailarr.
+The device must exist for this definition to start. A host without a GPU needs
+a reviewed local variant removing both mappings and Jellyfin GPU groups.
+Hardware acceleration requires separate application configuration.
 
 ## Environment
 
@@ -71,7 +75,22 @@ The rendered Compose definition can also be inspected with:
     docker compose \
       --env-file .env \
       -f compose/compose.yaml \
-      config
+      config --quiet
+
+## Prepare external storage and policy
+
+Create configuration directories for every persistent service and the data
+layout in [STORAGE.md](STORAGE.md). Assign ownership to the configured account;
+avoid world-writable permissions. Verify mounted filesystems are present before startup.
+Use `id -u`, `id -g`, `getent group video`, `getent group render` and `ls -l /dev/dri`
+to inspect the host. IDs in the example are illustrative.
+
+Copy `config/recyclarr/recyclarr.yml` to the Recyclarr directory under your
+`HESTIA_CONFIG_ROOT`. Copy `secrets.example.yml` alongside it as `secrets.yml`,
+then replace the placeholders locally and restrict its permissions. Ensure the
+container UID can read it. Create the `Hestia 1080p` quality profiles in Radarr
+and Sonarr before synchronizing; this repository supplies selected custom formats,
+not a complete quality profile definition.
 
 ## Start
 
@@ -89,3 +108,21 @@ configured through protected deployment configuration or the individual
 applications.
 
 Production databases and credentials do not belong in this repository.
+
+## First-run verification
+
+Configure authentication before granting household access. In Radarr and Sonarr,
+use the shared `/data/media/movies` and `/data/media/tv` root folders and the
+qBittorrent endpoint `http://qbittorrent:8080`. Configure download categories and
+paths under `/data/downloads/torrents`. Configure Prowlarr application sync,
+Seerr library-manager connections, and enrichment integrations with Docker DNS.
+Jellyfin library folders use `/media/movies` and `/media/tv`.
+
+Check `docker compose --env-file .env -f compose/compose.yaml ps`, then test an
+authorized sample request through download, import and playback. Verify subtitles,
+trailers and acceleration independently. Container startup and static validation
+do not confirm API credentials, permissions, GPU access or application health.
+
+The existing production Compose directory is separate from the repository.
+Do not run a second stack against its fixed container names. Review and promote
+repository changes into the existing deployment using [OPERATIONS.md](OPERATIONS.md).

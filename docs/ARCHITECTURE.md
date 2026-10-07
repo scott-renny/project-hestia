@@ -1,97 +1,55 @@
-# Hestia Architecture
+# Hestia architecture
 
-## Purpose
+Hestia is a logical media platform hosted on Atlas v1. Atlas v2 migration is a
+future deployment change, not a second implementation in this repository.
 
-Project Hestia provides the media-services layer of the COC environment.
+## Service relationships
 
-Hestia is a logical platform rather than a dedicated physical system.
-It currently runs on Atlas v1 and is designed to migrate to Atlas v2.
+See the [README diagram](../README.md#architecture) and its editable
+[Mermaid source](assets/architecture.mmd). Keep both synchronized when changing topology.
+Seerr sends approved requests to Radarr or Sonarr. Those managers search via
+Prowlarr and send transfers directly to qBittorrent. Prowlarr can use FlareSolverr
+for compatible indexers. Recyclarr targets the managers' APIs; Bazarr and Trailarr
+combine API integrations with filesystem access. Vanguarr integrates with
+Jellyfin and Seerr through deployment configuration.
 
-## Docker Network
+Compose declares containers, not these API relationships. API keys, indexers,
+download categories, root folders, authentication and schedules are runtime state.
+There are no declared `depends_on` relationships or repository-defined health checks.
+Startup does not establish application readiness. Image-provided health checks,
+if present, are determined by the deployed image version.
 
-Hestia services share the Docker network:
+## Network and access boundary
 
-    hestia
+All eleven services join the Compose-managed default bridge named `hestia`.
+Service names provide DNS endpoints such as `http://radarr:7878` and
+`http://sonarr:8989`. There is no per-service network segmentation and no
+`internal: true` isolation; outbound access supports upstream integrations.
+Fixed container names and the fixed network name make parallel deployments on
+one host unsuitable without explicit changes.
 
-Internal integrations use Docker DNS names where possible.
+Published ports are listed in the README and bind to all host interfaces.
+FlareSolverr and Recyclarr have no host port mappings. No reverse proxy, TLS,
+VPN or firewall is declared here. The broader host access layer must protect
+administration interfaces. [Docker networking reference](https://docs.docker.com/compose/how-tos/networking/).
 
-Examples:
+## Configuration and persistence boundary
 
-    http://jellyfin:8096
-    http://radarr:7878
-    http://sonarr:8989
-    http://prowlarr:9696
-    http://seerr:5055
+`HESTIA_CONFIG_ROOT` supplies individual service state mounts. Most use `/config`;
+Seerr uses `/app/config` and Vanguarr uses `/data`. FlareSolverr has no persistent mount.
+Recyclarr's tracked YAML is a template to copy into its external configuration root;
+Compose does not mount or copy the repository's `config/` directory automatically.
 
-This keeps application integrations independent of Atlas's LAN address.
+`HESTIA_DATA_ROOT` supplies shared `/data` to qBittorrent, Radarr, Sonarr, Bazarr
+and Trailarr. Jellyfin receives only the media and transcode subdirectories, with
+the existing writable mount behavior retained. See [storage](STORAGE.md).
+Recyclarr synchronizes selected custom formats into the `Hestia 1080p` profiles;
+its YAML does not provision an entire application configuration.
 
-## Functional Layers
+## Portability and host dependencies
 
-### Playback
-
-Jellyfin provides media libraries, playback, household users, watch
-history, resume state, metadata and API access.
-
-### Requests
-
-Seerr provides discovery and request management and connects requests
-to Radarr and Sonarr.
-
-### Library Automation
-
-Radarr manages movies.
-
-Sonarr manages television series and episodes.
-
-### Search Integration
-
-Prowlarr provides the shared search/indexer integration layer for
-Radarr and Sonarr.
-
-### Transfer
-
-qBittorrent provides the download-client role.
-
-### Policy
-
-Recyclarr applies Hestia's quality profiles and custom-format policy.
-
-### Subtitles
-
-Bazarr manages subtitle requirements independently from the primary
-library managers.
-
-### Trailers
-
-Trailarr manages trailers associated with library content.
-
-### Recommendations
-
-Vanguarr builds personalized recommendations using Jellyfin user and
-library information and integrates with Seerr.
-
-### Supporting Service
-
-FlareSolverr is available where compatible integrations require it.
-
-## Host Evolution
-
-Current:
-
-    Atlas v1
-    └── Hestia
-        ├── Docker services
-        ├── application configuration
-        └── external media storage
-
-Future:
-
-    Atlas v2
-    └── Hestia
-        ├── container/application tier
-        ├── metadata tier
-        ├── bulk media storage
-        └── Intel Quick Sync acceleration
-
-The underlying hardware can change without changing Hestia's logical
-role.
+Storage roots, user/group IDs and time zone are configurable. Jellyfin and
+Trailarr both map `/dev/dri`; Jellyfin adds host video/render group IDs. Hardware,
+ownership and application acceleration settings require checks on the new host.
+Preserve runtime state and consistent container paths during migration. Image tags
+are mostly mutable, so record deployed image digests before an upgrade or move.

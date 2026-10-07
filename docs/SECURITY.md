@@ -64,3 +64,34 @@ Before a commit:
 
 Validation is a guardrail and does not replace review of the proposed
 Git changes.
+
+## Exposure and image trust
+
+The `hestia` bridge allows all services to communicate and reach upstream services.
+It is not a firewall or a segmented trust boundary. Existing port mappings listen
+on all interfaces. Restrict administration access at the deployment layer and
+verify Docker-aware firewall rules from another machine. Remote proxy/TLS controls
+are external to this repository; do not assume they are installed by Compose.
+
+No privileged containers or Docker socket mounts are declared. GPU device access,
+writable shared media and application API credentials still grant meaningful access.
+Retain least-privilege filesystem ownership and use separate application accounts
+and API keys where supported. Logs and backups can contain credentials and user history.
+
+Mutable image tags can change on pull. Record deployed digests, review upstream
+changes and test upgrades. Image vulnerability scanning and runtime exposure tests
+are separate from repository validation.
+
+## Validation scope and incident response
+
+The validator scans tracked and new non-ignored publication files, including docs
+and examples. It rejects forbidden state paths, common credential signatures,
+literal configuration credentials and private/shared address literals. It reports
+locations without printing matched content. Ignored local deployment files are
+outside the publication boundary. Pattern checks cannot detect every secret;
+review the full staged diff and use an independent secret scanner before publishing.
+
+If credentials enter Git, revoke/rotate them first, assess logs and access, then
+coordinate history cleanup where needed. Deleting the latest file does not revoke
+the credential or remove earlier copies. CI runs with read-only repository permissions
+and no deployment secrets; it does not deploy the stack.

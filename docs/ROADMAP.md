@@ -35,7 +35,8 @@ Operational improvements:
 - add n8n health monitoring
 - add useful failure notifications
 - improve household account experience
-- add automated repository validation
+- maintain repository validation CI
+- evaluate image version pinning and verified service health checks
 
 ## LATER
 
