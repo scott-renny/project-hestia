@@ -1,109 +1,92 @@
-# Project Hestia
+<div align="center">
 
-Project Hestia is the media-services platform within the COC homelab.
+# 🏠 Project Hestia
 
-Hestia combines media serving, request management, library automation,
-quality policy, subtitle management, trailer automation, and personalized
-recommendations into a containerized Docker Compose platform.
+### Self-Hosted Media Automation & Delivery Platform
 
-Hestia currently runs on Project Atlas and is designed to migrate to
-Atlas v2 without changing its logical role.
+**A containerized media platform engineered for automated request handling,  
+library management, quality policy, enrichment, playback, and personalization.**
 
-## Platform
+![Linux](https://img.shields.io/badge/Linux-Ubuntu_24.04-E95420?logo=ubuntu&logoColor=white)
+![Docker](https://img.shields.io/badge/Docker-Compose-2496ED?logo=docker&logoColor=white)
+![Jellyfin](https://img.shields.io/badge/Jellyfin-Media_Platform-00A4DC?logo=jellyfin&logoColor=white)
+![GitHub](https://img.shields.io/badge/GitHub-Version_Control-181717?logo=github&logoColor=white)
+![Status](https://img.shields.io/badge/Status-Operational-success)
+![License](https://img.shields.io/badge/License-Not_Yet_Selected-lightgrey)
 
-| Service | Role |
-|---|---|
-| Jellyfin | Media server, playback, users and watch state |
-| Seerr | Discovery and request management |
-| Radarr | Movie automation |
-| Sonarr | Television automation |
-| Prowlarr | Search/indexer integration |
-| qBittorrent | Download client |
-| Bazarr | Subtitle automation |
-| Recyclarr | Quality policy as code |
-| Trailarr | Trailer automation |
-| Vanguarr | Personalized recommendations |
-| FlareSolverr | Supporting compatibility service |
+</div>
 
-## Core Flow
+---
 
-Movie requests:
+## Overview
 
-    Seerr -> Radarr -> Prowlarr -> qBittorrent
-                  -> import -> Jellyfin
+**Project Hestia** is the media-services platform within the COC homelab.
 
-TV requests:
+Rather than operating as a collection of independent applications, Hestia
+integrates media serving, request management, library automation, quality
+policy, subtitle management, trailer automation, and personalized
+recommendations into a unified Docker Compose platform.
 
-    Seerr -> Sonarr -> Prowlarr -> qBittorrent
-                  -> import -> Jellyfin
+The project is designed around reproducibility, service isolation,
+persistent storage, API-driven integration, configuration management, and
+safe migration between hosts.
 
-Supporting automation:
+Hestia currently runs on **Project Atlas v1** and is designed to migrate to
+**Atlas v2** without changing its logical role or application architecture.
 
-    Recyclarr -> Radarr / Sonarr quality policy
-    Bazarr    -> subtitle policy
-    Trailarr  -> trailers
-    Vanguarr  -> personalized recommendations
+---
 
-## Design Principles
+## Engineering Highlights
 
-- Docker Compose deployment
-- persistent configuration separated from bulk media
-- shared filesystem paths between automation services
-- Docker DNS for internal service communication
-- API-driven integrations
-- secrets excluded from Git
-- configuration and policy as code where practical
-- Jellyfin remains the source of truth for playback state
-- migration-friendly design
+- **Containerized service architecture** using Docker Compose
+- **Internal service discovery** through Docker DNS
+- **Persistent configuration separated from bulk media storage**
+- **Shared filesystem architecture** for reliable cross-service imports
+- **API-driven integration** between media and automation services
+- **Quality policy as code** using Recyclarr
+- **Automated subtitle and trailer enrichment**
+- **Personalized recommendation infrastructure**
+- **Hardware-acceleration support** for Jellyfin
+- **Environment-based host path configuration**
+- **Secrets and runtime state excluded from version control**
+- **Repository validation tooling** for configuration and credential checks
+- **Migration-friendly design** for the future Atlas v2 platform
 
-## Storage
+---
 
-Default deployment paths:
+## Architecture
 
-    /opt/hestia/config
-    /srv/hestia/data
+```mermaid
+flowchart TD
+    U[Household User] --> S[Seerr<br/>Discovery & Requests]
 
-They can be overridden with:
+    S --> R[Radarr<br/>Movies]
+    S --> SO[Sonarr<br/>TV & Series]
 
-    HESTIA_CONFIG_ROOT
-    HESTIA_DATA_ROOT
+    R --> P[Prowlarr<br/>Search Integration]
+    SO --> P
 
-## Repository
+    P --> Q[qBittorrent<br/>Acquisition]
 
-    project-hestia/
-    ├── compose/
-    ├── config/
-    ├── docs/
-    ├── diagrams/
-    └── scripts/
+    Q --> R
+    Q --> SO
 
-Production application databases, credentials, media, downloads,
-transcode data and runtime state are intentionally excluded.
+    R --> M[(Movie Library)]
+    SO --> T[(TV Library)]
 
-## Validation
+    M --> J[Jellyfin<br/>Media Platform]
+    T --> J
 
-Run:
+    B[Bazarr<br/>Subtitle Automation] --> R
+    B --> SO
 
-    ./scripts/validate-repo.sh
+    RC[Recyclarr<br/>Quality Policy as Code] --> R
+    RC --> SO
 
-## Status
+    TR[Trailarr<br/>Trailer Automation] --> R
+    TR --> SO
 
-The core movie and television automation pipelines are operational.
+    J --> V[Vanguarr<br/>Personalized Recommendations]
+    V --> J
 
-Quality policy, forced-subtitle automation, trailers and the
-recommendation infrastructure have also been integrated.
-
-Vanguarr personalization will be evaluated further after sufficient
-genuine Jellyfin viewing history exists.
-
-## Future
-
-Hestia will migrate from Atlas v1 to Atlas v2 while retaining the same
-logical role.
-
-Future interfaces such as Oberon TV can consume Hestia/Jellyfin services
-without replacing the backend media platform.
-
-## License
-
-No software license has been selected yet.
+    J --> U
