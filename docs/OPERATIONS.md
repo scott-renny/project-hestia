@@ -78,3 +78,26 @@ For a request pipeline:
 
 Container logs and application APIs should be used to identify the
 specific failing layer rather than restarting the entire stack.
+
+## Controlled changes
+
+Before changing production, record its Compose definition, environment and deployed
+image digests in protected storage. Review upstream release notes and validate the
+candidate with `docker compose config --quiet` to avoid displaying expanded secrets.
+Pull and recreate only the intended services in a maintenance window.
+`docker compose restart` does not apply changed Compose settings or new images.
+
+Check container status, logs, API connectivity and a request/import/playback sample.
+Database migrations can prevent returning safely to an older image; assess this
+before upgrades. Avoid `down -v` during routine operations.
+
+Backup and restore are outside the current Hestia scope. No recovery capability is
+claimed by this repository.
+
+## Host migration
+
+Stop the old stack before final state transfer. Preserve ownership and media layout,
+set the new storage roots, rediscover GPU groups and validate the new environment.
+Start on the target, verify the complete workflow and update external access controls.
+Retain the old host/state for rollback until verification completes. Avoid running
+both hosts against the same writable application state.

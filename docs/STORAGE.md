@@ -63,3 +63,13 @@ The repository supports:
     HESTIA_DATA_ROOT
 
 This allows storage to move without rewriting the Compose definition.
+
+## Import and recovery constraints
+
+Matching paths remove the need for remote path mappings when the download client
+and managers share this host layout. Hardlinks and atomic moves also require the
+source and destination to be on the same filesystem and suitable permissions;
+the shared mount alone does not guarantee them. Verify imports on the actual storage.
+Jellyfin sees `/media`, not `/data/media`, so integrations must account for that path
+difference. Confirm filesystem mounts before starting containers to avoid writing
+into an empty mountpoint on the host root filesystem.

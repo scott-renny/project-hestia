@@ -1,0 +1,21 @@
+name: Repository validation
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          persist-credentials: false
+      - name: Validate repository and Compose
+        run: ./scripts/validate-repo.sh
+      - name: Check Bash syntax and lint
+        run: |
+          bash -n scripts/validate-repo.sh
+          shellcheck scripts/validate-repo.sh
