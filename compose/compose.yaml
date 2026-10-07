@@ -1,0 +1,158 @@
+services:
+
+  jellyfin:
+    image: jellyfin/jellyfin:latest
+    container_name: hestia-jellyfin
+    restart: unless-stopped
+    user: "${PUID}:${PGID}"
+    group_add:
+      - "${VIDEO_GID}"
+      - "${RENDER_GID}"
+    devices:
+      - /dev/dri:/dev/dri
+    volumes:
+      - ${HESTIA_CONFIG_ROOT:-/opt/hestia/config}/jellyfin:/config
+      - ${HESTIA_DATA_ROOT:-/srv/hestia/data}/media:/media
+      - ${HESTIA_DATA_ROOT:-/srv/hestia/data}/transcode:/transcode
+    ports:
+      - "8096:8096"
+    environment:
+      - TZ=${TZ}
+
+  qbittorrent:
+    image: lscr.io/linuxserver/qbittorrent:latest
+    container_name: hestia-qbittorrent
+    restart: unless-stopped
+    environment:
+      - PUID=${PUID}
+      - PGID=${PGID}
+      - TZ=${TZ}
+      - WEBUI_PORT=8080
+      - TORRENTING_PORT=6881
+    volumes:
+      - ${HESTIA_CONFIG_ROOT:-/opt/hestia/config}/qbittorrent:/config
+      - ${HESTIA_DATA_ROOT:-/srv/hestia/data}:/data
+    ports:
+      - "8080:8080"
+      - "6881:6881"
+      - "6881:6881/udp"
+
+  prowlarr:
+    image: lscr.io/linuxserver/prowlarr:latest
+    container_name: hestia-prowlarr
+    restart: unless-stopped
+    environment:
+      - PUID=${PUID}
+      - PGID=${PGID}
+      - TZ=${TZ}
+    volumes:
+      - ${HESTIA_CONFIG_ROOT:-/opt/hestia/config}/prowlarr:/config
+    ports:
+      - "9696:9696"
+
+  flaresolverr:
+    image: ghcr.io/flaresolverr/flaresolverr:latest
+    container_name: hestia-flaresolverr
+    restart: unless-stopped
+    environment:
+      - LOG_LEVEL=info
+      - LOG_HTML=false
+      - CAPTCHA_SOLVER=none
+      - TZ=${TZ}
+
+  radarr:
+    image: lscr.io/linuxserver/radarr:latest
+    container_name: hestia-radarr
+    restart: unless-stopped
+    environment:
+      - PUID=${PUID}
+      - PGID=${PGID}
+      - TZ=${TZ}
+    volumes:
+      - ${HESTIA_CONFIG_ROOT:-/opt/hestia/config}/radarr:/config
+      - ${HESTIA_DATA_ROOT:-/srv/hestia/data}:/data
+    ports:
+      - "7878:7878"
+
+  sonarr:
+    image: lscr.io/linuxserver/sonarr:latest
+    container_name: hestia-sonarr
+    restart: unless-stopped
+    environment:
+      - PUID=${PUID}
+      - PGID=${PGID}
+      - TZ=${TZ}
+    volumes:
+      - ${HESTIA_CONFIG_ROOT:-/opt/hestia/config}/sonarr:/config
+      - ${HESTIA_DATA_ROOT:-/srv/hestia/data}:/data
+    ports:
+      - "8989:8989"
+
+  seerr:
+    image: ghcr.io/seerr-team/seerr:latest
+    container_name: hestia-seerr
+    restart: unless-stopped
+    environment:
+      - TZ=${TZ}
+      - LOG_LEVEL=info
+    volumes:
+      - ${HESTIA_CONFIG_ROOT:-/opt/hestia/config}/seerr:/app/config
+    ports:
+      - "5055:5055"
+
+  recyclarr:
+    image: ghcr.io/recyclarr/recyclarr:8
+    container_name: hestia-recyclarr
+    restart: unless-stopped
+    user: "${PUID}:${PGID}"
+    environment:
+      - TZ=${TZ}
+    volumes:
+      - ${HESTIA_CONFIG_ROOT:-/opt/hestia/config}/recyclarr:/config
+
+  bazarr:
+    image: lscr.io/linuxserver/bazarr:latest
+    container_name: hestia-bazarr
+    restart: unless-stopped
+    environment:
+      - PUID=${PUID}
+      - PGID=${PGID}
+      - TZ=${TZ}
+    volumes:
+      - ${HESTIA_CONFIG_ROOT:-/opt/hestia/config}/bazarr:/config
+      - ${HESTIA_DATA_ROOT:-/srv/hestia/data}:/data
+    ports:
+      - "6767:6767"
+
+
+  trailarr:
+    image: nandyalu/trailarr:latest
+    container_name: hestia-trailarr
+    restart: unless-stopped
+    environment:
+      - PUID=${PUID}
+      - PGID=${PGID}
+      - TZ=${TZ}
+    volumes:
+      - ${HESTIA_CONFIG_ROOT:-/opt/hestia/config}/trailarr:/config
+      - ${HESTIA_DATA_ROOT:-/srv/hestia/data}:/data
+    devices:
+      - /dev/dri:/dev/dri
+    ports:
+      - "7889:7889"
+
+
+  vanguarr:
+    image: ghcr.io/sparksbenjamin/vanguarr:latest
+    container_name: hestia-vanguarr
+    restart: unless-stopped
+    environment:
+      - TZ=${TZ}
+    volumes:
+      - ${HESTIA_CONFIG_ROOT:-/opt/hestia/config}/vanguarr:/data
+    ports:
+      - "8000:8000"
+
+networks:
+  default:
+    name: hestia

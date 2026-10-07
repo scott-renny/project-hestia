@@ -1,0 +1,56 @@
+# ==============================================================
+# Project Hestia - Git exclusions
+# ==============================================================
+
+# Environment / secrets
+.env
+.env.*
+!.env.example
+
+**/secrets.yml
+**/secrets.yaml
+**/*secret*
+!**/*.example.yml
+!**/*.example.yaml
+
+**/*credential*
+*.key
+*.pem
+*.p12
+*.pfx
+
+# Runtime databases/state
+*.db
+*.db-shm
+*.db-wal
+*.sqlite
+*.sqlite3
+*.log
+
+# Application runtime configuration
+runtime/
+state/
+
+# Media/runtime data
+data/
+media/
+downloads/
+transcode/
+
+# Backups
+*.bak
+*.backup
+*.old
+*~
+
+# Editors / OS
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+venv/
